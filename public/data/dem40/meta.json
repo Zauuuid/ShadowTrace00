@@ -1,0 +1,17 @@
+{
+ "source": "NASA PDS LOLA LDEM_85S_20M (LRO-L-LOLA-4-GDR-V1.0), 2x2 mean to 40 m",
+ "sourceSha256": "d900ac0aa97fbb983f9898873ead759d870fdb33978afc17fb4e1fa526aa49b2",
+ "size": 7584,
+ "tile": 512,
+ "tilesPerSide": 15,
+ "mapScaleM": 40.0,
+ "scalingFactorM": 0.5,
+ "referenceRadiusM": 1737400.0,
+ "originSample": 3791.5,
+ "originLine": 3791.5,
+ "signSample": 1,
+ "signLine": -1,
+ "minLatDeg": -85,
+ "encoding": "gzip int16 LE, row-major 512x512",
+ "checkVs240mMedianM": 13.5
+}

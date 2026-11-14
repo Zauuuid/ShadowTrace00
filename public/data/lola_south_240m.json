@@ -1,0 +1,21 @@
+{
+  "file": "lola_south_240m.bin.gz",
+  "dtype": "int16-le (gzip)",
+  "size": 3812,
+  "mapScaleM": 240.0,
+  "scalingFactorM": 0.5,
+  "referenceRadiusM": 1737400.0,
+  "projection": "polar stereographic (spherical), centre lat -90, centre lon 0, east-positive",
+  "originLine": 1905.5,
+  "originSample": 1905.5,
+  "signSample": 1,
+  "signLine": -1,
+  "minLatDeg": -75,
+  "verification": "Shackleton + Faustini depth check, score 6676 m",
+  "source": {
+    "file": "ldem_75s_240m.img",
+    "sha256": "d031efe2611b17dfbf3c158f5e15dc04cd5719349dcbf6384bb21fd97697c490",
+    "label": "ldem_75s_240m.lbl",
+    "dataSetId": "LRO-L-LOLA-4-GDR-V1.0"
+  }
+}

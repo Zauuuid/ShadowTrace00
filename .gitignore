@@ -1,0 +1,22 @@
+node_modules/
+dist/
+coverage/
+test-results/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+
+# raw NASA downloads (reproduce with scripts/*.py)
+data-raw/
+
+.venv/
+.agents/
+.claude/
+.superpowers/
+skills-lock.json

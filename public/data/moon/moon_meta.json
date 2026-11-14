@@ -1,0 +1,65 @@
+{
+ "generated": "2026-11-14T17:50:30Z",
+ "source": {
+  "name": "NASA SVS CGI Moon Kit",
+  "page": "https://svs.gsfc.nasa.gov/4720/",
+  "files": [
+   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_8k.tif",
+   "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_16_uint.tif"
+  ],
+  "credit": "NASA/Goddard/Scientific Visualization Studio; LRO LROC (ASU) and LOLA teams",
+  "note": "optimized for aesthetics, not science"
+ },
+ "projection": "equirectangular, centred on 0 deg longitude, north up",
+ "normalStrength": 3.0,
+ "checks": {
+  "orientation": {
+   "overall": 149.4,
+   "tycho": 204.7,
+   "tranquillitatis": 68.4,
+   "tychoMirror": 156.6,
+   "tranquillitatisMirror": 103.8
+  },
+  "elevation": {
+   "minM": -8981.5,
+   "maxM": 10685.5
+  }
+ },
+ "files": [
+  {
+   "name": "color_2k.webp",
+   "bytes": 240120,
+   "sha256": "e54c5a5248ce430c53db12af05bd80c50b3506105aff47f064bd3af1e099918c",
+   "width": 2048,
+   "height": 1024
+  },
+  {
+   "name": "color_4k.webp",
+   "bytes": 846276,
+   "sha256": "ab8bb02f482f08ed4b6d37e6973cfb0afb5b1860706407c3943991708adbb03b",
+   "width": 4096,
+   "height": 2048
+  },
+  {
+   "name": "color_8k.webp",
+   "bytes": 3507364,
+   "sha256": "69fa90142fba79db42ac77011bfd66d840e385839d32890e45d7bb2ec387984c",
+   "width": 8192,
+   "height": 4096
+  },
+  {
+   "name": "normal_2k.webp",
+   "bytes": 809180,
+   "sha256": "e01efeef5c6800a9edc83089c5649f44370fbf5cbadaed50c21665fb0a3d589c",
+   "width": 2048,
+   "height": 1024
+  },
+  {
+   "name": "normal_4k.webp",
+   "bytes": 2601392,
+   "sha256": "58cc06bdfd058f0afae2735a12c9a91f7a31c6d3bd304f5f085a3e95ef3d5075",
+   "width": 4096,
+   "height": 2048
+  }
+ ]
+}
