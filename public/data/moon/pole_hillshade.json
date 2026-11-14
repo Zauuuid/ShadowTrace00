@@ -1,0 +1,10 @@
+{
+ "date": "2027-01-27T04:00:00Z",
+ "sunSubSolarLatDeg": -0.3457,
+ "sunSubSolarLonDeg": -55.0544,
+ "extentM": 160200.0,
+ "source": "NASA PDS LRO LOLA 240 m + NASA JPL Horizons",
+ "note": "visualization only: local relief shading, no cast shadows, ambient and gain are artistic",
+ "bytes": 505222,
+ "sha256": "0864c349850ad10e5c8751136a7c5f415923bc6e317e1606a9cb0c21754dd3fb"
+}

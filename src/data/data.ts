@@ -39,6 +39,26 @@ export interface PlannerData {
 }
 
 let cache: Promise<PlannerData> | null = null;
+let ephCache: Promise<EphemerisFile> | null = null;
+
+/** The ephemeris alone (the Journey needs it for its lighting before the terrain has loaded). */
+export function loadEphemerisFile(): Promise<EphemerisFile> {
+  ephCache ??= fetch(`${BASE}data/ephemeris.json`).then((r) => {
+    if (!r.ok) { ephCache = null; throw new Error(`ephemeris.json: ${r.status}`); }
+    return r.json() as Promise<EphemerisFile>;
+  });
+  return ephCache;
+}
+
+export interface SourceEntry { readonly id: string; readonly name: string; readonly url: string; readonly period?: string; readonly resolution?: string; readonly usedFor: readonly string[]; readonly scientific: boolean; readonly note?: string; readonly credit?: string }
+let srcCache: Promise<readonly SourceEntry[]> | null = null;
+export function loadSources(): Promise<readonly SourceEntry[]> {
+  srcCache ??= fetch(`${BASE}data/SOURCES.json`).then((r) => (r.ok ? r.json() : { sources: [] })).then((j: { sources: SourceEntry[] }) => j.sources, () => []);
+  return srcCache;
+}
+
+/** Forget a failed load so the UI can retry. */
+export function resetPlannerData(): void { cache = null; }
 
 export function loadPlannerData(): Promise<PlannerData> {
   cache ??= (async () => {
@@ -65,7 +85,7 @@ export function loadPlannerData(): Promise<PlannerData> {
       },
     });
     const [ephFile, namesFile, vectors, , suit] = await Promise.all([
-      json('ephemeris.json') as Promise<EphemerisFile>,
+      loadEphemerisFile(),
       json('lunar_names.json') as Promise<{ features: [string, number, number, number, string][] }>,
       json('moontrek_vectors.json') as Promise<VectorLayers>,
       terrain.init(),
@@ -79,15 +99,16 @@ export function loadPlannerData(): Promise<PlannerData> {
       names: namesFile.features.map(([name, lat, lon, diameterKm, kind]) => ({ name, lat, lon, diameterKm, kind })),
     };
   })();
+  cache.catch(() => { cache = null; });
   return cache;
 }
 
-export function usePlannerData(): PlannerData | null | Error {
+export function usePlannerData(attempt = 0): PlannerData | null | Error {
   const [d, setD] = useState<PlannerData | null | Error>(null);
   useEffect(() => {
     let live = true;
     loadPlannerData().then((x) => live && setD(x), (e: unknown) => live && setD(e instanceof Error ? e : new Error(String(e))));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
   return d;
 }

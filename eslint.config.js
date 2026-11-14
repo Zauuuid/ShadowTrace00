@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'node_modules', '.venv', '.agents', 'data-raw'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -19,6 +19,11 @@ export default tseslint.config(
   {
     // The engine stays pure: no React, no UI.
     files: ['src/planner/**'],
-    rules: { 'no-restricted-imports': ['error', { patterns: [{ group: ['react', 'react-dom', 'zustand', '**/ui/**'], message: 'src/planner must stay pure TypeScript.' }] }] },
+    rules: { 'no-restricted-imports': ['error', { patterns: [{ group: ['react', 'react-dom', 'zustand', 'three', 'gsap', 'gsap/*', 'lenis', '**/planner-ui/**', '**/journey/**', '**/state/**', '**/hooks/**'], message: 'src/planner must stay pure TypeScript.' }] }] },
+  },
+  {
+    // UI calls the engine through hooks; panels and planner UI never import the terrain/horizon maths directly.
+    files: ['src/journey/panels/**'],
+    rules: { 'no-restricted-imports': ['error', { patterns: [{ group: ['**/planner/terrain', '**/planner/horizon'], message: 'No science maths in panels.' }] }] },
   },
 );

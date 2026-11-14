@@ -1,0 +1,23 @@
+/* Chapter 06 §2 — "Graphite, ice and long shadows". The only place colours are defined. */
+:root {
+  --bg-0: #05070B; --bg-1: #0A0F18; --bg-2: #111826;
+  --glass: rgba(12, 18, 30, .55);
+  --line: rgba(190, 208, 226, .14); --line-strong: rgba(190, 208, 226, .28);
+  --text: #E8EDF2; --muted: #8D99A8; --dust: #CFC8BC;
+  --ice: #9FD8E8; --ice-dim: #5E9AAB; --ice-glow: rgba(159, 216, 232, .35);
+  --sun: #F2B35C; --earth: #7FB8E6;
+  --ok: #6FD3A0; --warn: #E8B65A; --bad: #E5707A; --nodata: #7D8794;
+  --ok-bg: rgba(111, 211, 160, .10); --warn-bg: rgba(232, 182, 90, .10); --bad-bg: rgba(229, 112, 122, .10);
+  --paper: #F2EFE8; --ink: #161A22; --paper-muted: #6B6A64;
+
+  --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-io: cubic-bezier(.65, .05, .2, 1);
+  --d-micro: 120ms; --d-ui: 280ms; --d-panel: 600ms; --d-text: 900ms;
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 72px; --s9: 112px; --s10: 160px;
+  --r-line: 2px; --r-in: 10px; --r-pill: 999px;
+
+  --f-sans: 'Manrope Variable', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --gutter: clamp(20px, 5vw, 96px);
+}
+:root[lang='ar'] { --f-sans: 'IBM Plex Sans Arabic', 'Manrope Variable', system-ui, sans-serif; --f-mono: 'JetBrains Mono Variable', 'IBM Plex Sans Arabic', ui-monospace, monospace; }

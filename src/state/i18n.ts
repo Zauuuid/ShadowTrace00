@@ -1,4 +1,5 @@
 import { usePlanner } from './store';
+import * as V3 from './copy';
 
 const ar = {
   appName: 'ShadowTrace',
@@ -340,8 +341,8 @@ const en: Record<keyof typeof ar, string> = {
   slopeThere: 'slope {s}°',
 };
 
-export type Key = keyof typeof ar;
-const DICT = { ar, en };
+export type Key = keyof typeof ar | keyof typeof V3.ar;
+export const DICT: Record<'ar' | 'en', Record<Key, string>> = { ar: { ...ar, ...V3.ar }, en: { ...en, ...V3.en } };
 
 export function useT() {
   const lang = usePlanner((s) => s.lang);

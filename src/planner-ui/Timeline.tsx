@@ -47,8 +47,8 @@ function useRows(eph: Ephemeris, horizon: Horizon, site: LatLon, minEarth: numbe
   }, [eph, horizon, site, minEarth, t0, span, cols, sub]);
 }
 
-const sunColor = (v: number) => (v <= 0 ? '#151b30' : `rgba(255,181,71,${0.25 + 0.75 * v})`);
-const earthColor = (v: number) => (v <= 0 ? '#151b30' : `rgba(92,200,255,${0.25 + 0.75 * v})`);
+const sunColor = (v: number) => (v <= 0 ? '#0d1320' : `rgba(242,179,92,${0.25 + 0.75 * v})`);
+const earthColor = (v: number) => (v <= 0 ? '#0d1320' : `rgba(127,184,230,${0.25 + 0.75 * v})`);
 
 export function Timeline({ eph, horizon, site }: Props) {
   const t = useT();
@@ -144,9 +144,9 @@ export function Timeline({ eph, horizon, site }: Props) {
           <button type="button" aria-label="+15" onClick={() => setAnchor(viewStart + NUDGE)}>›</button>
         </div>
         <div className="tl-legend">
-          <span><i style={{ background: '#FFB547' }} />{t('sunUp')}</span>
-          <span><i style={{ background: '#5CC8FF' }} />{t('earthUp')}</span>
-          <span><i style={{ background: '#151b30', outline: '1px solid #2a3356' }} />{t('sunDown')} / {t('earthDown')}</span>
+          <span><i style={{ background: '#F2B35C' }} />{t('sunUp')}</span>
+          <span><i style={{ background: '#7FB8E6' }} />{t('earthUp')}</span>
+          <span><i style={{ background: '#0d1320', outline: '1px solid rgba(190,208,226,.2)' }} />{t('sunDown')} / {t('earthDown')}</span>
         </div>
       </div>
       <svg ref={main} viewBox={`0 0 ${W} ${LH * 2 + 56}`} className="tl-svg" onPointerMove={moveMain} onPointerUp={stop} onPointerCancel={stop}>
