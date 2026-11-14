@@ -184,13 +184,12 @@ export function createMoonScene(o: SceneOptions): MoonScene {
   moon.add(hill);
   let hillLoaded = false;
 
-  const artMat = track(new THREE.LineDashedMaterial({ color: 0x9fd8e8, dashSize: 0.0012, gapSize: 0.0008, transparent: true, opacity: 0, depthTest: false }));
+  const artMat = track(new THREE.LineBasicMaterial({ color: 0x9fd8e8, transparent: true, opacity: 0, depthTest: false }));
   const labelAnchors: THREE.Vector3[] = [];
   for (const f of o.vectors?.artemis3.features ?? []) {
     const ring = f.rings[0] ?? [];
     const pts = ring.map(([x, y]) => mapToSphere(x!, y!, 1.0008));
     const line = new THREE.LineLoop(track(new THREE.BufferGeometry().setFromPoints(pts)), artMat);
-    line.computeLineDistances();
     line.renderOrder = 2;
     moon.add(line);
     const c = pts.reduce((s, p) => s.add(p), new THREE.Vector3()).divideScalar(Math.max(1, pts.length));
@@ -286,7 +285,7 @@ export function createMoonScene(o: SceneOptions): MoonScene {
     traceMat.opacity = 0.85 * s.trace;
     if (s.hill > 0.01 && !hillLoaded) {
       hillLoaded = true;
-      loader.load(`${BASE}pole_hillshade_2k.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; hillU.uMap.value = t; track(t); });
+      loader.load(`${BASE}pole_hillshade_2k.webp?v=2`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; hillU.uMap.value = t; track(t); });
     }
     hillU.uOpacity.value = hillU.uMap.value === blank ? 0 : s.hill;
     artMat.opacity = 0.9 * s.artemis;

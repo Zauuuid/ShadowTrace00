@@ -62,15 +62,15 @@ export function startJourney(o: RuntimeOptions): Runtime {
       moon.pause(self.progress > 0.995 && state.dim > 0.85);
     },
   }));
-  o.root.querySelectorAll<HTMLElement>('[data-scene]').forEach((el) => {
-    triggers.push(ScrollTrigger.create({ trigger: el, start: 'top 65%', end: 'bottom 35%', toggleClass: { targets: el, className: 'in' } }));
+  o.root.querySelectorAll<HTMLElement>('[data-scene]').forEach((el, i) => {
+    triggers.push(ScrollTrigger.create({ trigger: el, start: i === 0 ? -1 : 'top top', end: 'bottom top', toggleClass: { targets: el, className: 'in' } }));
   });
   const disc = o.root.querySelector<HTMLElement>('[data-scene="2"]');
   if (disc) triggers.push(ScrollTrigger.create({ trigger: disc, start: 'top+=35% top', once: true, onEnter: o.onCount }));
   const hand = o.root.querySelector<HTMLElement>('[data-reveal-circle]');
   if (hand) {
     triggers.push(ScrollTrigger.create({
-      trigger: hand.closest('[data-scene]')!, start: 'top 60%', end: 'bottom bottom', scrub: 0.8,
+      trigger: hand.closest('[data-scene]')!, start: 'top top', end: 'bottom bottom', scrub: 0.8,
       onUpdate: (self) => { hand.style.clipPath = `circle(${(self.progress * 150).toFixed(2)}% at 50% 50%)`; },
     }));
   }

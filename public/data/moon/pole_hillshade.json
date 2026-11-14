@@ -5,6 +5,6 @@
  "extentM": 160200.0,
  "source": "NASA PDS LRO LOLA 240 m + NASA JPL Horizons",
  "note": "visualization only: local relief shading, no cast shadows, ambient and gain are artistic",
- "bytes": 505222,
- "sha256": "0864c349850ad10e5c8751136a7c5f415923bc6e317e1606a9cb0c21754dd3fb"
+ "bytes": 380320,
+ "sha256": "fd737778ba594ba9b59ff9a5d61554856303b0edbafc5f8d58a2977f88f82161"
 }

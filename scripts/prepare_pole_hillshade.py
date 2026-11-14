@@ -24,8 +24,8 @@ import numpy as np
 from PIL import Image
 
 HALF_PX = 667.5
-AMBIENT = 0.06  # artistic floor
-GAIN = 4.0      # visual contrast: shade 0.25 -> white
+AMBIENT = 0.035  # artistic floor
+GAIN = 2.2      # visual contrast: shade 0.45 -> white
 
 
 def sun_at(eph: dict, iso: str) -> tuple[float, float]:

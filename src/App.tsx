@@ -14,6 +14,10 @@ import { LAST_STEP, usePlanner, type Step } from './state/store';
 
 const STEPS: readonly Key[] = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
 
+// The route wins over the saved language on first load (#/en, #/ar).
+const initial = /^#\/(en|ar)\b/.exec(typeof location === 'undefined' ? '' : location.hash);
+if (initial) usePlanner.setState({ lang: initial[1] as Lang });
+
 function useLangRoute(): void {
   const lang = usePlanner((s) => s.lang);
   const set = usePlanner((s) => s.set);
@@ -22,7 +26,6 @@ function useLangRoute(): void {
       const m = /^#\/(en|ar)\b/.exec(location.hash);
       if (m && m[1] !== usePlanner.getState().lang) set({ lang: m[1] as Lang });
     };
-    read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, [set]);
@@ -71,7 +74,7 @@ export function App() {
         <div className="top-ctl">
           {!inPlanner ? <button type="button" className="btn-text hide-sm" onClick={() => go(1)}>{t('skip.toPlanner')}</button> : null}
           <div className="seg" role="group" aria-label="time zone">
-            {(['utc', 'ksa'] as const).map((z) => <button key={z} type="button" aria-pressed={tz === z} onClick={() => set({ tz: z })}>{t(z)}</button>)}
+            {(['utc', 'ksa'] as const).map((z) => <button key={z} type="button" aria-pressed={tz === z} onClick={() => set({ tz: z })}><span className="long">{t(z)}</span><span className="short" aria-hidden="true">{z === 'utc' ? 'UTC' : '+3'}</span></button>)}
           </div>
           <div className="seg" role="group" aria-label="language">
             {(['en', 'ar'] as const).map((l) => <button key={l} type="button" aria-pressed={lang === l} lang={l} onClick={() => { saveLang(l); set({ lang: l }); }}>{l === 'en' ? 'EN' : 'عربي'}</button>)}
