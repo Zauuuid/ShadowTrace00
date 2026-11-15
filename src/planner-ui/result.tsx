@@ -2,9 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { PlannerData, SourceEntry } from '../data/data';
 import { loadSources } from '../data/data';
-import { useAlternatives } from '../hooks/useAlternatives';
 import type { Analysis } from '../hooks/useAnalysis';
-import { ALT_RADIUS_KM, type DateAlternative, type SiteAlternative } from '../planner/alternatives';
 import { horizonAt } from '../planner/horizon';
 import { hours, majorEvents, SOLAR_CONSTANT_W_M2, type MissionResult } from '../planner/mission';
 import { distanceAz } from '../planner/polar';
@@ -13,11 +11,13 @@ import { dirName, useT, type Key } from '../state/i18n';
 import { outageRows } from '../state/outages';
 import { encodeMission } from '../state/share';
 import { usePlanner } from '../state/store';
-import { reasonSentence, verdictSentences } from '../state/verdictText';
+import { verdictSentences } from '../state/verdictText';
 import { SeriesChart, type Factor } from './charts';
-import { MoonMap } from './MoonMap';
-import { SectorRing, StepHead } from './steps';
+import { SectorRing } from './steps';
 import { Timeline } from './Timeline';
+import { FindingsList, findingText } from './assessment';
+import type { Candidate } from '../planner/candidates';
+import { SavedAssessments } from './saved';
 import { Badge, Icon, MiniMoon, OutageList, Sheet, Skeleton, type IconName, type Tone } from './widgets';
 
 const HOUR = 3_600_000;
@@ -96,7 +96,7 @@ export function ConfidenceDrawer({ onClose }: { onClose: () => void }) {
 }
 
 // ---------------------------------------------------------------- 5 · Result
-export function ResultStep({ data, a, busy }: { data: PlannerData; a: Analysis | null; busy: boolean }) {
+export function TechnicalDetails({ data, a, busy }: { data: PlannerData; a: Analysis | null; busy: boolean }) {
   const t = useT();
   const lang = usePlanner((s) => s.lang);
   const tz = usePlanner((s) => s.tz);
@@ -104,9 +104,11 @@ export function ResultStep({ data, a, busy }: { data: PlannerData; a: Analysis |
   const startMs = usePlanner((s) => s.startMs);
   const endMs = usePlanner((s) => s.endMs);
   const limits = usePlanner((s) => s.limits);
+  const mode = usePlanner((s) => s.mode);
   const [explain, setExplain] = useState<Metric | null>(null);
   const [drawer, setDrawer] = useState(false);
-  if (!a) return <section className="step"><StepHead n={5} title={t('step5')} /><Skeleton label={t('loading')} /></section>;
+  if (!a) return <Skeleton label={t('loading')} />;
+  void busy;
   const m = 'kind' in a.mission ? null : a.mission;
   const v = VERDICT[a.status];
   const cell = (metric: Metric, label: Key, value: string, unit: string, bad: boolean, sub?: string) => (
@@ -117,15 +119,12 @@ export function ResultStep({ data, a, busy }: { data: PlannerData; a: Analysis |
     </button>
   );
   return (
-    <section className="step">
-      <StepHead n={5} title={t('step5')} />
-      <div className={`verdict ${v.tone}${busy ? ' busy' : ''}`} aria-live="polite">
-        <div className="v-top"><span className="v-word">{t(v.k)}</span><Icon name={v.tone === 'ok' ? 'check' : v.tone === 'bad' ? 'cross' : 'question'} size={44} /></div>
-        <ul className="v-sent">{verdictSentences(t, a).map((s) => <li key={s}>{s}</li>)}</ul>
-        <p className="v-meta mono"><bdi>{fmtDateTime(startMs, lang, tz)}</bdi> → <bdi>{fmtDateTime(endMs, lang, tz)}</bdi> · <bdi dir="ltr">{site.lat.toFixed(3)}°, {site.lon.toFixed(3)}°</bdi></p>
-        {busy ? <p className="mono small">{t('recomputing')}…</p> : null}
-      </div>
-
+    <section className="tech">
+      <details className="v4-details block" open={mode === 'expert'}>
+        <summary><span className="h2">{t('v4.details')}</span><span className="muted small">{t('v4.detailsHint')}</span></summary>
+        <div className="block"><h3 className="h3">{t('v4.allFindings')}</h3><FindingsList s={a.assessment} /></div>
+        <ul className="v-sent legacy">{verdictSentences(t, a).map((x) => <li key={x}>{x}</li>)}</ul>
+        <p className="v-meta mono"><bdi>{fmtDateTime(startMs, lang, tz)}</bdi> → <bdi>{fmtDateTime(endMs, lang, tz)}</bdi> · <bdi dir="ltr">{site.lat.toFixed(3)}°, {site.lon.toFixed(3)}°</bdi> · {t(v.k)}</p>
       {m ? (
         <>
           <div className="metric-ledger">
@@ -161,13 +160,12 @@ export function ResultStep({ data, a, busy }: { data: PlannerData; a: Analysis |
         </>
       ) : null}
 
-      {a.status === 'rejected' ? <Alternatives data={data} a={a} busy={busy} /> : null}
-
       <div className="block conf-summary">
         <h2 className="h2">{t('confidence.title')}</h2>
         <SourcesList />
         <button type="button" className="btn-text" onClick={() => setDrawer(true)}>{t('confidence.open')}</button>
       </div>
+      </details>
       {explain && m ? <Explainer metric={explain} a={a} m={m} onClose={() => setExplain(null)} /> : null}
       {drawer ? <ConfidenceDrawer onClose={() => setDrawer(false)} /> : null}
     </section>
@@ -239,65 +237,8 @@ function Sky({ a, m }: { a: Analysis; m: MissionResult }) {
   );
 }
 
-function Alternatives({ data, a, busy }: { data: PlannerData; a: Analysis; busy: boolean }) {
-  const t = useT();
-  const lang = usePlanner((s) => s.lang);
-  const tz = usePlanner((s) => s.tz);
-  const site = usePlanner((s) => s.site);
-  const craft = usePlanner((s) => s.craft);
-  const set = usePlanner((s) => s.set);
-  const [open, setOpen] = useState<{ kind: 'site'; v: SiteAlternative } | { kind: 'date'; v: DateAlternative } | null>(null);
-  const { sites, dates, searching } = useAlternatives(data, a, busy, true);
-  const farthest = sites ? Math.max(0, ...sites.map((x) => x.distanceM)) : 0;
-  const battH = (craft.batteryWh * craft.usableFrac) / Math.max(1, craft.nightLoadW);
-  return (
-    <div className="block">
-      <h2 className="h2">{t(sites && sites.length && !sites.some((x) => x.passes) ? 'altNearest' : 'altSites')}</h2>
-      {searching ? <Skeleton label={t('searchingWide', { km: ALT_RADIUS_KM })} /> : null}
-      {sites === null ? null : sites.length === 0 ? <p className="muted">{t('noneFound')}</p> : (
-        <div className="two-col wide-main">
-          <MoonMap key={Math.round(farthest / 5000)} data={data} site={site} height={380} initialRes={Math.max(60, (farthest * 2.6) / 900)}
-            markers={sites.map((x, i) => ({ id: `a${i}`, at: x.site, label: String(i + 1), tone: x.passes ? 'good' : 'info', onClick: () => setOpen({ kind: 'site', v: x }) }))} />
-          <ol className="alts">
-            {sites.map((x, i) => (
-              <li key={i}><button type="button" className="row-btn" onClick={() => setOpen({ kind: 'site', v: x })}>
-                <span className="aim-n mono">{i + 1}</span>
-                <span><b><bdi>{fmtNum(x.distanceM / 1000, 1)}</bdi> {t('km')}</b> {dirName(lang, x.azDeg)}<br /><span className="mono small muted">{t('longestDark')} <bdi>{fmtHours(x.darkH)}</bdi> {t('hShort')} · {t('longestBlackout')} <bdi>{fmtHours(x.blackoutH)}</bdi> {t('hShort')} · <bdi>{fmtNum(x.slopeDeg, 1)}°</bdi></span></span>
-                <Badge tone={x.passes ? 'ok' : 'warn'}>{t(x.passes ? 'altPasses' : 'altClosest')}</Badge>
-              </button></li>
-            ))}
-          </ol>
-        </div>
-      )}
-      {dates && dates.length ? (
-        <>
-          <h3 className="h3">{t('altDates')}</h3>
-          <div className="chips">{dates.map((d) => <button key={d.shiftDays} type="button" className={d.passes ? 'chip ok' : 'chip'} onClick={() => setOpen({ kind: 'date', v: d })}>{t(d.shiftDays > 0 ? 'daysLater' : 'daysEarlier', { n: Math.abs(d.shiftDays) })} · <bdi>{fmtDate(d.startMs, lang, tz)}</bdi></button>)}</div>
-        </>
-      ) : null}
-      {open ? (
-        <Sheet title={open.kind === 'site' ? <><bdi>{fmtNum(open.v.distanceM / 1000, 1)} {t('km')}</bdi> · {dirName(lang, open.v.azDeg)}</> : t(open.v.shiftDays > 0 ? 'daysLater' : 'daysEarlier', { n: Math.abs(open.v.shiftDays) })} onClose={() => setOpen(null)}>
-          {open.kind === 'site' ? <p className="mono" dir="ltr">{open.v.site.lat.toFixed(4)}°, {open.v.site.lon.toFixed(4)}°</p> : <p className="mono"><bdi>{fmtDateTime(open.v.startMs, lang, tz)}</bdi> → <bdi>{fmtDateTime(open.v.endMs, lang, tz)}</bdi></p>}
-          <h3 className="h3">{t(open.v.passes ? 'why' : 'stillFails')}</h3>
-          <ul className="ledger-list">
-            {open.v.passes ? <>
-              <li><Icon name="check" size={16} />{t('whyDark', { d: fmtHours(open.v.darkH), b: fmtHours(battH) })}</li>
-              <li><Icon name="check" size={16} />{t('whyEarth', { h: fmtHours(open.v.blackoutH) })}</li>
-              {open.kind === 'site' ? <li><Icon name="check" size={16} />{t('slopeHere')} <bdi>{fmtNum(open.v.slopeDeg, 1)}°</bdi></li> : null}
-            </> : open.v.reasons.map((r) => <li key={r.code}><Icon name="warn" size={16} />{reasonSentence(t, r)}</li>)}
-          </ul>
-          <div className="sheet-actions">
-            <button type="button" className="btn-primary" onClick={() => { if (open.kind === 'site') set({ site: open.v.site }); else set({ startMs: open.v.startMs, endMs: open.v.endMs }); setOpen(null); }}><span>{t(open.kind === 'site' ? 'goThere' : 'useDate')}</span></button>
-            <button type="button" className="btn-text" onClick={() => setOpen(null)}>{t('close')}</button>
-          </div>
-        </Sheet>
-      ) : null}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------- 6 · Report
-export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null }) {
+export function ReportStep({ data, a, alts }: { data: PlannerData; a: Analysis | null; alts?: readonly Candidate[] }) {
   const t = useT();
   const lang = usePlanner((s) => s.lang);
   const tz = usePlanner((s) => s.tz);
@@ -307,6 +248,8 @@ export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null 
   const endMs = usePlanner((s) => s.endMs);
   const craft = usePlanner((s) => s.craft);
   const limits = usePlanner((s) => s.limits);
+  const missionName = usePlanner((s) => s.missionName);
+  const craftId = usePlanner((s) => s.craftId);
   const [copied, setCopied] = useState<'ok' | 'manual' | null>(null);
   const [now] = useState(() => Date.now());
   const link = `${location.origin}${location.pathname}${encodeMission({ site, dispersion, startMs, endMs, craft, limits })}`;
@@ -318,14 +261,14 @@ export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null 
     <li key={x.startMs}><bdi>{fmtDateTime(x.startMs, lang, tz)}</bdi> {lang === 'ar' ? '←' : '→'} <bdi>{fmtDateTime(x.endMs, lang, tz)}</bdi> · <bdi>{fmtHours((x.endMs - x.startMs) / HOUR)}</bdi> {t('hShort')}</li>
   ));
   const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied('ok'); } catch { setCopied('manual'); } };
-  const v = a ? VERDICT[a.status] : null;
+  const vd = a?.assessment.verdict;
+  const vTone = vd === 'suitable' ? 'ok' : vd === 'conditional' ? 'warn' : vd === 'unsuitable' ? 'bad' : 'nodata';
   return (
     <section className="step narrow">
-      <div className="no-print"><StepHead n={6} title={t('reportTitle')} /></div>
       <article className="report">
         <header className="rp-head">
-          <div className="rp-brand"><MiniMoon size={30} /><b dir="ltr">ShadowTrace</b><span>{t('reportTitle')}</span></div>
-          <div className={`rp-verdict ${v?.tone ?? ''}`}>{v ? t(v.k) : '…'}</div>
+          <div className="rp-brand"><MiniMoon size={30} /><b dir="ltr">SHADOWTRACE</b><span>{missionName || t('m.untitled')}</span></div>
+          <div className={`rp-verdict ${a ? vTone : ''}`}>{a ? `${t(`v4.verdict.${a.assessment.verdict}` as Key)} · ${a.assessment.score}/100` : '…'}</div>
         </header>
         <div className="rp-grid">
           <div><span>{t('sumSite')}</span><b dir="ltr">{site.lat.toFixed(4)}°, {site.lon.toFixed(4)}°</b></div>
@@ -335,7 +278,8 @@ export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null 
           <div><span>{t('sumDur')}</span><b><bdi>{fmtNum((endMs - startMs) / (24 * HOUR), 1)}</bdi> {t('days')}</b></div>
           {m ? <div><span>{t('longestDark')}</span><b><bdi>{fmtHours(hours(m.longestDark))}</bdi> {t('hShort')}</b></div> : null}
         </div>
-        {a ? <ul className="rp-sent">{verdictSentences(t, a).map((s) => <li key={s}>{s}</li>)}</ul> : null}
+        {a ? <ul className="rp-sent">{a.assessment.findings.filter((f) => f.tone !== 'info').map((f) => <li key={f.code}>{findingText(t, lang, f)}</li>)}</ul> : null}
+        {a ? <p className="rp-src">{t('v4.conf')}: {t(`v4.conf.${a.assessment.confidence}` as Key)} · {t('v4.coverage')}: <bdi>{fmtNum(a.assessment.coveragePct, 0)}%</bdi> · {t('v4.score.note')}</p> : null}
         {m ? (
           <div className="rp-grid two">
             <div><span>{t('sunOut')}</span>{m.darkRuns.length ? <ul>{runs(m.darkRuns)}</ul> : <em>{t('noOutage')}</em>}</div>
@@ -346,6 +290,15 @@ export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null 
           <div><span>{t('craftSum')}</span><b><bdi>{fmtNum(craft.batteryWh)} Wh</bdi> · {t('coversH', { h: fmtHours(battH) })} · <bdi>{fmtNum(craft.arrayAreaM2, 1)} m²</bdi> · {t('peakW', { w: fmtNum(SOLAR_CONSTANT_W_M2 * craft.arrayAreaM2 * craft.arrayEff) })}</b></div>
           <div><span>{t('marginSum')}</span><b dir="ltr">N {fmtNum(dispersion.northM)} · E {fmtNum(dispersion.eastM)} · S {fmtNum(dispersion.southM)} · W {fmtNum(dispersion.westM)} m · {fmtNum(limits.legSpanM, 1)} m · {fmtNum(limits.maxSlopeDeg)}°</b></div>
         </div>
+        <div className="rp-craft">
+          <img src={`${import.meta.env.BASE_URL}assets/spacecraft/${craftId === 'custom' ? 'explorer' : craftId}-perspective.webp`} alt="" />
+          <div><span>{t('j.fleet')}</span><b>{craftId === 'custom' ? t('f.custom') : t(`f.${craftId}.name` as Key)}</b><em>{t('f.illustrative')}</em></div>
+        </div>
+        {alts && alts.length ? (
+          <div className="rp-alts"><span>{t('a.title')}</span>
+            <ol>{alts.map((c, i) => <li key={i}><b dir="ltr">{c.alt.site.lat.toFixed(3)}°, {c.alt.site.lon.toFixed(3)}°</b> · <bdi>{fmtNum(c.alt.distanceM / 1000, 1)} km</bdi> · {t(`v4.verdict.${c.verdict}` as Key)} · {c.score}/100</li>)}</ol>
+          </div>
+        ) : null}
         <div className="rp-conf">
           <span>{t('confidence.title')}</span>
           <ul>{conf.map((r) => <li key={r.metric}><b>{t(`explainer.${r.metric}` as Key)}</b> — {r.source} · {r.resolution}{r.missing !== t('conf.none') ? ` · ${r.missing}` : ''}</li>)}</ul>
@@ -358,6 +311,7 @@ export function ReportStep({ data, a }: { data: PlannerData; a: Analysis | null 
         <button type="button" className="btn-text" onClick={copy}><Icon name="link" size={18} />{copied === 'ok' ? t('copied') : t('copyLink')}</button>
       </div>
       {copied === 'manual' ? <input className="link-box no-print" readOnly dir="ltr" value={link} onFocus={(e) => e.currentTarget.select()} autoFocus /> : null}
+      <SavedAssessments a={a} link={link} />
     </section>
   );
 }

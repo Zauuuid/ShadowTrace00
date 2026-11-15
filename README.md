@@ -1,15 +1,23 @@
-# ShadowTrace
+# SHADOWTRACE — Lunar Landing Intelligence
 
-**Lunar south-pole landing planner** for NASA Space Apps Challenge 2026, *Lunar Landing Site Navigator*.
+**Every landing begins with a decision.** Choose a spacecraft (Scout, Explorer or Pioneer — SHADOWTRACE concept
+designs with illustrative specifications), pick a site near the lunar south pole on an interactive 3D Moon, watch an
+illustrative launch, explore the landing zone, and get a **Suitable / Conditional / Unsuitable** decision computed from
+NASA data — with up to five evidence-based alternative sites shown on the globe.
 
-Six simple steps: **dates → spacecraft → site → error margin → result → report**. Each step starts with a short guided tour (it can be skipped).
+Journey: `Home → Spacecraft → Mission → Launch → Landing → Decision → Alternatives` (+ NASA data page and mission report).
+Arabic-first with full RTL, and English. Basic and Expert modes.
 
-The result says whether the plan works (**Suitable / Rejected**) in one clear sentence, then gives:
-- the exact dates when the Sun and Earth go away;
-- a multi-year timeline with draggable handles;
-- the nearest alternative sites and dates if the plan fails.
+### What is computed (and what is not)
+- **Touchdown uncertainty:** seeded Monte Carlo (600 samples by default) over the k-sigma error ellipse; slope from
+  NASA LOLA heights over max(leg span, 2 × grid); P(safe) with a Wilson 95 % interval. Never shown as 100 %.
+- **Power & illumination:** JPL Horizons Sun + LOLA terrain horizon + the spacecraft's array and battery.
+- **Earth visibility:** geometric line of sight (not signal strength).
+- **Not assessed (stated in every result):** Diviner thermal, boulders smaller than the 40 m grid, relay satellites.
+- The launch sequence is a **cinematic visualization, not a trajectory calculation** (labelled on screen).
 
-The report step prints a one-page mission card (PDF) and copies a link that reopens the same mission. The interface is Arabic first, with English.
+See `docs/AUDIT.md`, `docs/DESIGN.md`, `public/data/catalog.json` (dataset catalog) and the in-app *NASA data* page.
+Database design (PostgreSQL/PostGIS, not provisioned in the static deployment): `db/migrations/`.
 
 ## Data (NASA only)
 - **Sun and Earth:** NASA JPL Horizons, hourly from Nov 2026 to Dec 2035. It matches direct Horizons queries within 0.006° (`scripts/verify_horizons.py`).
@@ -42,8 +50,9 @@ The site is fully static: `npm run build` produces `dist/`.
 - **GitHub Pages:** `.github/workflows/deploy.yml` publishes on every push to `main`.
 
 ## Layout
-- `src/planner/`: the engine (pure TypeScript): ephemeris, terrain, horizon, power and battery, landing zone, alternatives.
-- `src/ui/`: the 6-step interface, guided tours, report.
+- `src/planner/`: the engine (pure TypeScript): ephemeris, terrain, horizon, power and battery, landing zone, touchdown Monte Carlo (`uncertainty.ts`), assessment (`assess.ts`), site context, fleet profiles (`fleet.ts`), alternatives and candidate evaluation.
+- `src/globe/`: the interactive 3D Moon (Three.js).
+- `src/screens/`: the mission-journey screens. `src/planner-ui/`: shared views (descent, findings, report).
 - `scripts/`: Python scripts that build `public/data/` from NASA sources.
 
 ## AI disclosure

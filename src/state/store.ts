@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { DEFAULT_REQ, type Requirements } from '../planner/assess';
 import type { Dispersion } from '../planner/landing';
+import { engineInputs, fleetSpec, type CraftId } from '../planner/fleet';
 import type { Limits, Spacecraft } from '../planner/mission';
 import type { LatLon } from '../planner/polar';
 import { decodeMission } from './share';
@@ -7,10 +9,15 @@ import { decodeMission } from './share';
 import { savedLang, type Lang } from './lang';
 export type { Lang };
 export type Tz = 'utc' | 'ksa';
+export type Mode = 'basic' | 'expert';
+export type Page = 'home' | 'fleet' | 'mission' | 'launch' | 'landing' | 'decision' | 'alternatives' | 'data' | 'report';
+export const PAGES: readonly Page[] = ['home', 'fleet', 'mission', 'launch', 'landing', 'decision', 'alternatives', 'data', 'report'];
+/** The mission journey, in order (Data and Report sit outside it). */
+export const JOURNEY: readonly Page[] = ['home', 'fleet', 'mission', 'launch', 'landing', 'decision', 'alternatives'];
 export type LayerId = 'suit' | 'grid' | 'psr' | 'earth' | 'detail';
-/** 0 welcome · 1 dates · 2 spacecraft · 3 site · 4 error margin · 5 result · 6 report */
-export type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export const LAST_STEP = 6;
+/** Plan stages: 1 dates · 2 spacecraft · 3 location · 4 landing uncertainty · 5 mission requirements */
+export type Step = 1 | 2 | 3 | 4 | 5;
+export const LAST_STEP = 5;
 
 /** Defaults: averages of published NASA vehicle specs (Nova-C, Blue Ghost, Peregrine, VIPER). Loads are not published. */
 export const DEFAULT_CRAFT: Spacecraft = {
@@ -45,36 +52,56 @@ interface PlannerState {
   endMs: number;
   craft: Spacecraft;
   limits: Limits;
+  req: Requirements;
+  craftId: CraftId | 'custom';
+  missionName: string;
+  mode: Mode;
+  page: Page;
   windowDays: number;
   preset: string;
   layers: Record<LayerId, boolean>;
   set: (p: Partial<Omit<PlannerState, 'set'>>) => void;
   setCraft: (p: Partial<Spacecraft>) => void;
   setLimits: (p: Partial<Limits>) => void;
+  setReq: (p: Partial<Requirements>) => void;
+  chooseCraft: (id: CraftId) => void;
   toggleLayer: (id: LayerId) => void;
 }
 
+function savedMode(): Mode {
+  try { return typeof localStorage !== 'undefined' && localStorage.getItem('st.mode') === 'expert' ? 'expert' : 'basic'; } catch { return 'basic'; }
+}
+export function saveMode(m: Mode): void {
+  try { localStorage.setItem('st.mode', m); } catch { /* storage unavailable: keep in memory only */ }
+}
 
 export const usePlanner = create<PlannerState>((set) => ({
   lang: savedLang(),
   tz: 'utc',
-  step: 0,
+  step: 1,
   craftPage: 1,
   skipTours: false,
   toursSeen: {},
   // Crest of NASA's "Connecting Ridge" Artemis III candidate region: highest 40 m LOLA cell within 3 km
   site: { lat: -89.4391, lon: -137.1912 },
-  dispersion: DEFAULT_DISPERSION,
+  dispersion: engineInputs(fleetSpec('explorer')).dispersion,
   startMs: START,
   endMs: START + 14 * DAY,
-  craft: DEFAULT_CRAFT,
-  limits: DEFAULT_LIMITS,
+  craft: engineInputs(fleetSpec('explorer')).craft,
+  limits: { ...DEFAULT_LIMITS, ...engineInputs(fleetSpec('explorer')).limits },
+  req: DEFAULT_REQ,
+  craftId: 'explorer',
+  missionName: '',
+  mode: savedMode(),
+  page: 'home',
   windowDays: 180,
   preset: 'avg',
   layers: { suit: true, grid: false, psr: false, earth: false, detail: true },
   set: (p) => set(p),
-  setCraft: (p) => set((s) => ({ craft: { ...s.craft, ...p } })),
+  setCraft: (p) => set((s) => ({ craft: { ...s.craft, ...p }, craftId: 'custom' })),
   setLimits: (p) => set((s) => ({ limits: { ...s.limits, ...p } })),
+  setReq: (p) => set((s) => ({ req: { ...s.req, ...p } })),
+  chooseCraft: (id) => set((s) => { const e = engineInputs(fleetSpec(id)); return { craftId: id, craft: e.craft, limits: { ...s.limits, ...e.limits }, dispersion: e.dispersion }; }),
   toggleLayer: (id) => set((s) => ({ layers: { ...s.layers, [id]: !s.layers[id] } })),
 }));
 
@@ -83,7 +110,7 @@ function applySharedLink(): void {
   if (typeof location === 'undefined') return;
   const m = decodeMission(location.hash);
   if (!m) return;
-  usePlanner.setState({ ...m, step: 5, skipTours: true });
+  usePlanner.setState({ ...m, page: 'decision', craftId: 'custom', skipTours: true });
   // Drop the hash so later edits are not overwritten by the shared mission on reload.
   history.replaceState(null, '', location.pathname + location.search);
 }

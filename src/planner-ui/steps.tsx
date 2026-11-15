@@ -310,7 +310,11 @@ export function MarginStep({ data, a, busy }: { data: PlannerData; a: Analysis |
   const limits = usePlanner((s) => s.limits);
   const set = usePlanner((s) => s.set);
   const setLimits = usePlanner((s) => s.setLimits);
+  const mode = usePlanner((s) => s.mode);
+  const req = usePlanner((s) => s.req);
+  const setReq = usePlanner((s) => s.setReq);
   const landing = busy ? undefined : a?.landing; // never show the previous site's result
+  const td = busy ? undefined : a?.touchdown;
   const isDefault = DIRS.every(([k]) => dispersion[k] === DEFAULT_DISPERSION[k]);
   const reach = Math.max(dispersion.northM, dispersion.eastM, dispersion.southM, dispersion.westM, ...(landing?.safeAims ?? []).map((s) => s.distanceM + 100));
   const farRes = Math.max(2, Math.round((reach * 2.4) / 420));
@@ -363,6 +367,23 @@ export function MarginStep({ data, a, busy }: { data: PlannerData; a: Analysis |
             </div>
           ) : null}
           {landing && !landing.safe && !landing.safeAims.length && landing.samples > 0 ? <p className="small bad-t">{t('noSafeNear')}</p> : null}
+          {td && td.valid > 0 ? (
+            <div className="td-mini">
+              <span className="label mono">{t('v4.c.footprint')}</span>
+              <b className="num"><bdi>{fmtNum(td.pSafe * 100, td.pSafe >= 1 ? 0 : td.pSafe >= 0.99 || td.pSafe < 0.1 ? 1 : 0)}%</bdi></b>
+              <span className="muted small">{t('v4.count', { safe: td.safe, n: td.valid })}</span>
+            </div>
+          ) : null}
+          {mode === 'expert' ? (
+            <div className="req-box">
+              <h4 className="label mono">{t('v4.req.title')}</h4>
+              <NumberField label={t('v4.req.pSafe')} unit="%" value={req.minPSafe * 100} step={0.5} min={50} max={99.9} digits={1} onChange={(v) => setReq({ minPSafe: v / 100 })} />
+              <NumberField label={t('v4.req.sigma')} unit="σ" value={req.sigmaLevel} step={0.5} min={1} max={5} digits={1}
+                note={t('v4.req.sigma.note', { k: fmtNum(req.sigmaLevel, 1), pct: fmtNum(100 * (1 - Math.exp(-(req.sigmaLevel ** 2) / 2)), 1) })} onChange={(v) => setReq({ sigmaLevel: v })} />
+              <NumberField label={t('v4.req.samples')} unit="" value={req.samples} step={200} min={200} max={4000} onChange={(v) => setReq({ samples: Math.round(v) })} />
+              <p className="cap mono">{t('v4.req.note')}</p>
+            </div>
+          ) : null}
         </aside>
       </div>
     </section>

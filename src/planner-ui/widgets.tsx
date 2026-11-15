@@ -46,7 +46,7 @@ export function MiniMoon({ size = 28 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="mini-moon">
       <circle cx="16" cy="16" r="11" fill="#CFC8BC" />
       <path d="M16 5a11 11 0 0 1 0 22a7 11 0 0 0 0-22z" fill="#0A0F18" opacity=".86" />
-      <circle cx="16" cy="16" r="13.5" fill="none" stroke="#9FD8E8" strokeWidth=".75" strokeDasharray="2 2.4" />
+      <circle cx="16" cy="16" r="13.5" fill="none" stroke="#65D8E8" strokeWidth=".75" strokeDasharray="2 2.4" />
     </svg>
   );
 }

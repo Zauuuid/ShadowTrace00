@@ -182,9 +182,19 @@ export function Journey({ a, onPlanner }: { a: Analysis | null; onPlanner: () =>
       <section data-scene="6" className="scene s6" style={{ '--h': `${HEIGHTS[5]}vh` } as React.CSSProperties}>
         <div className="scene-in">
           <div className="handoff" data-reveal-circle style={staticMode ? undefined : { clipPath: 'circle(0% at 50% 50%)' }}>
+            <picture className="handoff-art" aria-hidden="true">
+              <source media="(max-width: 800px)" srcSet={`${BASE}media/art/lander-descent-800.webp`} />
+              <img src={`${BASE}media/art/lander-descent-1600.webp`} alt="" loading="lazy" decoding="async" />
+            </picture>
+            <p className="eyebrow mono">{t('v4.home.kicker')}</p>
             <h2 className="display md">{t('journey.s6.title')}</h2>
-            <p className="lede">{t('journey.s6.body')}</p>
-            <button type="button" className="btn-primary" onClick={onPlanner}><span>{t('journey.s6.cta')}</span><Icon name="arrow" size={18} className="flip-rtl" /></button>
+            <p className="lede">{t('v4.home.lead')}</p>
+            <p className="journey-line mono">{t('v4.journey')}</p>
+            <div className="cta-row">
+              <button type="button" className="btn-primary" onClick={onPlanner}><span>{t('v4.home.start')}</span><Icon name="arrow" size={18} className="flip-rtl" /></button>
+              <button type="button" className="btn-text" onClick={() => { usePlanner.getState().set({ page: 'data' }); window.scrollTo({ top: 0 }); }}>{t('v4.home.methods')}</button>
+            </div>
+            <span className="art-label mono">{t('v4.home.art')}</span>
           </div>
         </div>
       </section>

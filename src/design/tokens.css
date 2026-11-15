@@ -1,13 +1,19 @@
-/* Chapter 06 §2 — "Graphite, ice and long shadows". The only place colours are defined. */
+/* v4 lunar colour system. The only place colours are defined. Every hue carries one scientific meaning:
+   Ice Cyan = interaction, selection and the uncertainty ellipse · Lunar Gold = sunlight / illumination / power
+   Polar Blue = Earth and communication · Safe Mint = assessed-safe · Amber = conditional · Hazard Coral = hazard / rule broken
+   Graphite greys = terrain and structure · Silver = text. Contrast of --muted on --bg-0 ≥ 6.5:1 (WCAG AA). */
 :root {
-  --bg-0: #05070B; --bg-1: #0A0F18; --bg-2: #111826;
-  --glass: rgba(12, 18, 30, .55);
-  --line: rgba(190, 208, 226, .14); --line-strong: rgba(190, 208, 226, .28);
-  --text: #E8EDF2; --muted: #8D99A8; --dust: #CFC8BC;
-  --ice: #9FD8E8; --ice-dim: #5E9AAB; --ice-glow: rgba(159, 216, 232, .35);
-  --sun: #F2B35C; --earth: #7FB8E6;
-  --ok: #6FD3A0; --warn: #E8B65A; --bad: #E5707A; --nodata: #7D8794;
-  --ok-bg: rgba(111, 211, 160, .10); --warn-bg: rgba(232, 182, 90, .10); --bad-bg: rgba(229, 112, 122, .10);
+  /* v4 aerospace identity — roles in docs/DESIGN.md §3. Red = danger only; mint = verified positive only. */
+  --bg-0: #080D1B; --bg-1: #0E1730; --bg-2: #142B50; --bg-3: #1B3765;
+  --glass: rgba(14, 23, 48, .72);
+  --line: rgba(216, 222, 232, .11); --line-strong: rgba(216, 222, 232, .24);
+  --text: #D8DEE8; --white: #F4F6FA; --muted: #8C97AD; --dust: #CFC8BC;
+  --primary: #2868B2; --primary-hi: #3D82D1; --primary-glow: rgba(40, 104, 178, .35);
+  --violet: #7868B8; --violet-hi: #9A8CD6;
+  --ice: #65D5E5; --ice-dim: #3F98A6; --ice-glow: rgba(101, 213, 229, .30);
+  --sun: #D9B36C; --earth: #6FA3E0;
+  --ok: #5FC9A0; --warn: #E0A84F; --bad: #C94F62; --nodata: #7A859B;
+  --ok-bg: rgba(95, 201, 160, .10); --warn-bg: rgba(224, 168, 79, .10); --bad-bg: rgba(201, 79, 98, .12);
   --paper: #F2EFE8; --ink: #161A22; --paper-muted: #6B6A64;
 
   --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-io: cubic-bezier(.65, .05, .2, 1);
